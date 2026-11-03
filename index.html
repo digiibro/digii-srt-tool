@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digii Bro SRT Tool — Audio to SRT, Edit &amp; Resegment</title>
+<style>
+  :root{
+    --bg:#0B0B0D; --panel:#141418; --panel2:#191920; --border:#26262E;
+    --text:#F4F4F5; --muted:#9C9CA6; --faint:#6E6E78;
+    --accent:#FF6A2B; --accent-dark:#E5541B; --ok:#3ECF7A; --err:#FF5C5C;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent)}
+  header.topbar{position:sticky;top:0;z-index:50;background:rgba(11,11,13,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .topbar-in{max-width:1120px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px}
+  .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);display:flex;align-items:flex-end;justify-content:center;gap:3px;padding-bottom:9px;flex:none}
+  .logo i{display:block;width:4px;background:#14100C;border-radius:2px}
+  .logo i:nth-child(1){height:8px}.logo i:nth-child(2){height:16px}.logo i:nth-child(3){height:11px}.logo i:nth-child(4){height:19px}
+  .brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.2px}
+  .brand p{margin:0;color:var(--muted);font-size:12.5px}
+  .badge{margin-left:auto;background:#221812;color:var(--accent);border:1px solid #3A2415;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
+  main{max-width:1120px;margin:0 auto;padding:22px 20px 60px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:18px}
+  .card h2{font-size:16px;margin:0 0 4px;font-weight:700;display:flex;align-items:center;gap:9px}
+  .card h2 .step{width:24px;height:24px;border-radius:8px;background:var(--accent);color:#160F0A;font-size:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .card .sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+  label.lbl{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+  input[type=text],input[type=password],input[type=number],select,textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:10px 12px;font-size:14.5px;font-family:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  textarea{resize:vertical}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:170px}
+  .btn{appearance:none;border:1px solid var(--border);background:var(--panel2);color:var(--text);
+    border-radius:10px;padding:10px 18px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}
+  .btn:hover{border-color:#3A3A44}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#180F08}
+  .btn.primary:hover{background:var(--accent-dark)}
+  .btn.big{padding:13px 26px;font-size:15.5px;width:100%}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.small{padding:5px 10px;font-size:12.5px;border-radius:8px}
+  .btn.danger:hover{border-color:var(--err);color:var(--err)}
+  .drop{border:2px dashed #34343E;border-radius:var(--radius);padding:28px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#1A130E}
+  .drop .big-ic{font-size:30px}
+  .drop p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+  .drop strong{font-size:15.5px}
+  .fileinfo{display:none;margin-top:14px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px}
+  .fileinfo b{word-break:break-all}
+  .fileinfo .meta{color:var(--muted);font-size:13px;margin-top:2px}
+  audio{width:100%;margin-top:12px}
+  .tabs{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .tab{flex:1;min-width:230px;text-align:left;background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;cursor:pointer;color:var(--text);font-family:inherit}
+  .tab b{display:block;font-size:15px}
+  .tab span{color:var(--muted);font-size:12.5px}
+  .tab.active{border-color:var(--accent);background:#1D130C}
+  .tab.active b{color:var(--accent)}
+  .note{font-size:12.5px;color:var(--faint);margin-top:8px}
+  .note b{color:var(--muted)}
+  progress.pbar{width:100%;height:10px;appearance:none;margin-top:14px;display:none}
+  progress.pbar::-webkit-progress-bar{background:#232329;border-radius:99px}
+  progress.pbar::-webkit-progress-value{background:var(--accent);border-radius:99px}
+  progress.pbar::-moz-progress-bar{background:var(--accent);border-radius:99px}
+  .status{font-size:13.5px;color:var(--muted);margin-top:10px;white-space:pre-wrap;word-break:break-word;min-height:18px}
+  .status.err{color:var(--err)}
+  .status.ok{color:var(--ok)}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .stat{flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+  .stat .v{font-size:19px;font-weight:800}
+  .stat .k{font-size:11.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .seg{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--panel2);cursor:pointer;transition:border-color .12s}
+  .seg:hover{border-color:#3A3A44}
+  .seg.playing{border-color:var(--accent);background:#1E150F}
+  .seg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .seg-num{font-weight:800;color:var(--accent);font-size:13px;min-width:34px}
+  .seg-head input[type=text]{width:118px;padding:6px 8px;font-size:13px;font-variant-numeric:tabular-nums}
+  .seg-head .arr{color:var(--faint);font-size:13px}
+  .seg-head .sp{flex:1}
+  .seg textarea{min-height:44px;font-size:15px;line-height:1.55;background:#101014}
+  .empty{color:var(--faint);text-align:center;padding:26px 10px;font-size:14px;border:1px dashed #2C2C34;border-radius:12px}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .switch input{accent-color:var(--accent);width:16px;height:16px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .toolbar .sp{flex:1}
+  .fr-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+  @media(max-width:640px){.fr-grid{grid-template-columns:1fr}}
+  .res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
+  .export-row{display:flex;gap:10px;flex-wrap:wrap}
+  footer{color:var(--faint);font-size:12.5px;text-align:center;padding:0 20px 34px}
+  .hidden{display:none!important}
+
+  .socials{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+  .socials a{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);color:var(--text);text-decoration:none;font-weight:700;font-size:14px;padding:9px 16px;border-radius:999px;transition:.15s}
+  .socials a:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+  .socials a small{color:var(--muted);font-weight:600}
+  .socials a:hover small{color:var(--accent)}
+  .apibox{background:var(--panel2);border:1px dashed #3A3A44;border-radius:10px;padding:12px 16px;margin:10px 0 4px}
+  .apibox b{color:var(--accent)}
+  .apibox ol{margin:6px 0 2px;padding-left:20px}
+  .apibox li{margin-bottom:2px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="logo"><i></i><i></i><i></i><i></i></div>
+    <div class="brand">
+      <h1>Digii Bro SRT Tool</h1>
+      <p>Audio &rarr; SRT &middot; Edit &middot; Resegment</p>
+    </div>
+    <span class="badge">Audience Edition</span>
+  </div>
+</header>
+
+<main>
+  <div class="socials">
+    <a href="https://www.instagram.com/digiibro" target="_blank" rel="noopener">📸 Instagram <small>@digiibro</small></a>
+    <a href="https://www.tiktok.com/@digiibro" target="_blank" rel="noopener">🎵 TikTok <small>@digiibro</small></a>
+    <a href="https://whatsapp.com/channel/0029Vb9G4yDHgZWjqhp5Ub2B" target="_blank" rel="noopener">💬 WhatsApp Channel <small>Join Free</small></a>
+  </div>
+  <!-- STEP 1 : UPLOAD -->
+  <section class="card">
+    <h2><span class="step">1</span> Upload your audio or video file</h2>
+    <p class="sub">MP3, WAV, M4A, MP4, OGG or WEBM. Your file never leaves this page except the copy sent to the transcription engine you choose below.</p>
+    <div class="drop" id="dropZone" tabindex="0" role="button" aria-label="Upload file">
+      <div class="big-ic">&#127911;</div>
+      <strong>Drag &amp; drop your file here, or click to choose</strong>
+      <p>Voiceovers of any length work. Very long files are split automatically.</p>
+    </div>
+    <input type="file" id="fileInput" accept=".mp3,.wav,.m4a,.mp4,.ogg,.webm,audio/*,video/mp4,video/webm" class="hidden">
+    <div class="fileinfo" id="fileInfo">
+      <b id="fiName"></b>
+      <div class="meta" id="fiMeta"></div>
+      <audio id="player" controls preload="metadata"></audio>
+    </div>
+    <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+      <span class="sub" style="margin:0">Already have an SRT file? Load it straight into the editor:</span>
+      <button class="btn small" id="importSrtBtn" type="button">Import .SRT file</button>
+      <input type="file" id="srtInput" accept=".srt" class="hidden">
+    </div>
+  </section>
+
+  <!-- STEP 2 : ENGINE -->
+  <section class="card">
+    <h2><span class="step">2</span> Transcribe</h2>
+    <p class="sub">Two engines, same editor. Pick one, then press the big button.</p>
+    <div class="tabs" role="tablist">
+      <button class="tab active" id="tabGroq" type="button"><b>Groq &mdash; Fast &middot; Best accuracy</b><span>Whisper Large v3 in the cloud. Needs your own free Groq API key.</span></button>
+      <button class="tab" id="tabBrowser" type="button"><b>Browser Whisper &mdash; Free forever &middot; No key</b><span>Runs inside your browser. Works offline after the first model download.</span></button>
+    </div>
+
+    <div id="panelGroq">
+      <label class="lbl" for="groqKey">Your Groq API key</label>
+      <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+      <p class="note"><b>Your key stays in your browser</b> (saved only in this browser&rsquo;s local storage) and is sent only to Groq. Get a free key at console.groq.com &rarr; API Keys.</p>
+      <div class="apibox">
+        <b>How to get your FREE Groq API key (takes 1 minute — no card needed):</b>
+        <ol>
+          <li>Open <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> and sign up / log in (free — Google or email).</li>
+          <li>Click <b>Create API Key</b>, give it any name (e.g. &ldquo;srt&rdquo;), and submit.</li>
+          <li>Copy the key — it starts with <b>gsk_</b> and is shown only once.</li>
+          <li>Paste it in the box above. Done — it is saved in your browser, so next time you will not need it again.</li>
+        </ol>
+      </div>
+      <div class="row">
+        <div>
+          <label class="lbl" for="groqModel">Model</label>
+          <select id="groqModel">
+            <option value="whisper-large-v3" selected>whisper-large-v3 &mdash; best accuracy</option>
+            <option value="whisper-large-v3-turbo">whisper-large-v3-turbo &mdash; fastest</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl" for="groqLang">Audio language</label>
+          <select id="groqLang">
+            <option value="hi" selected>Hindi (Devanagari output)</option>
+            <option value="ur">Urdu</option>
+            <option value="en">English</option>
+            <option value="">Auto-detect</option>
+          </select>
+        </div>
+      </div>
+      <p class="note">Files bigger than 24 MB are automatically converted to small 16 kHz audio and sent in ~10-minute parts. Free Groq limits are generous (thousands of requests per day), but if you hit one, the tool will tell you in plain words.</p>
+    </div>
+
+    <div id="panelBrowser" class="hidden">
+      <div class="row">
+        <div>
+          <label class="lbl" for="bwModel">Model</label>
+          <select id="bwModel">
+            <option value="Xenova/whisper-small" selected>Whisper Small &mdash; recommended (~250 MB, first download only)</option>
+            <option value="onnx-community/whisper-large-v3-turbo_timestamped">Whisper Large v3 Turbo &mdash; best quality (~760 MB, needs a strong laptop)</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl" for="bwLang">Audio language</label>
+          <select id="bwLang">
+            <option value="hi" selected>Hindi (Devanagari output)</option>
+            <option value="ur">Urdu</option>
+            <option value="en">English</option>
+            <option value="">Auto-detect</option>
+          </select>
+        </div>
+      </div>
+      <p class="note">The model downloads once and stays cached in your browser &mdash; after that this engine works fully offline and costs nothing, forever. Tiny and Base models are intentionally <b>not</b> offered: they fail badly on Hindi/Urdu. Transcription happens in a background worker, so the page never freezes. Best on a desktop/laptop.</p>
+    </div>
+
+    <div style="margin-top:18px">
+      <button class="btn primary big" id="transcribeBtn" type="button">Transcribe &rarr; Build SRT</button>
+    </div>
+    <progress class="pbar" id="prog" value="0" max="100"></progress>
+    <div class="toolbar" style="margin-top:10px;margin-bottom:0">
+      <div class="status" id="status" style="margin-top:0;flex:1"></div>
+      <button class="btn small hidden" id="cancelBtn" type="button">Cancel</button>
+    </div>
+  </section>
+
+  <!-- STEP 3 : EDITOR -->
+  <section class="card">
+    <h2><span class="step">3</span> Edit your subtitles</h2>
+    <p class="sub">Click any segment to hear it. Edit the text or the start/end times, split, merge, delete or add segments &mdash; then export below.</p>
+    <div class="stats">
+      <div class="stat"><div class="v" id="stDuration">0:00</div><div class="k">Duration</div></div>
+      <div class="stat"><div class="v" id="stWords">0</div><div class="k">Words</div></div>
+      <div class="stat"><div class="v" id="stSegs">0</div><div class="k">Segments</div></div>
+      <div class="stat"><div class="v" id="stEngine">&mdash;</div><div class="k">Engine used</div></div>
+    </div>
+    <div class="toolbar">
+      <label class="switch"><input type="checkbox" id="autoScroll" checked> Auto-scroll to playing segment</label>
+      <span class="sp"></span>
+      <button class="btn small" id="addSegTop" type="button">+ Add segment</button>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">
+      <label class="lbl" style="margin-top:0">Find &amp; Replace (in all segments)</label>
+      <div class="fr-grid">
+        <input type="text" id="frFind" placeholder="Find text...">
+        <input type="text" id="frRepl" placeholder="Replace with...">
+        <button class="btn" id="frBtn" type="button">Replace all</button>
+      </div>
+      <div class="status" id="frStatus"></div>
+    </div>
+    <div id="segList"><div class="empty">No subtitles yet. Transcribe a file above, or import an .SRT file in Step 1.</div></div>
+  </section>
+
+  <!-- STEP 4 : RESEGMENT -->
+  <section class="card">
+    <h2><span class="step">4</span> Resegment</h2>
+    <p class="sub">Re-split the subtitles using the stored word timings &mdash; no re-transcribing needed. A segment breaks as soon as any limit you set is reached. Leave a box at 0 to ignore that limit.</p>
+    <div class="res-grid">
+      <div>
+        <label class="lbl" for="rsWords">Max words per segment</label>
+        <input type="number" id="rsWords" value="12" min="0" step="1">
+      </div>
+      <div>
+        <label class="lbl" for="rsChars">Max characters</label>
+        <input type="number" id="rsChars" value="84" min="0" step="1">
+      </div>
+      <div>
+        <label class="lbl" for="rsDur">Max duration (seconds)</label>
+        <input type="number" id="rsDur" value="0" min="0" step="0.5">
+      </div>
+      <div>
+        <label class="switch"><input type="checkbox" id="rsSentence" checked> Sentence-aware (break at . ? ! &#2404;)</label>
+      </div>
+      <div>
+        <button class="btn primary" id="resegmentBtn" type="button" style="width:100%">Apply Resegment</button>
+      </div>
+    </div>
+    <div class="status" id="rsStatus"></div>
+  </section>
+
+  <!-- STEP 5 : EXPORT -->
+  <section class="card">
+    <h2><span class="step">5</span> Export</h2>
+    <p class="sub">Download the finished subtitles, or copy the ready-made prompt that turns the Hindi text into Roman Hinglish with any AI &mdash; timings untouched.</p>
+    <div class="export-row">
+      <button class="btn primary" id="expSrt" type="button">Download SRT</button>
+      <button class="btn" id="expVtt" type="button">Download VTT</button>
+      <button class="btn" id="expTxt" type="button">Download TXT</button>
+      <button class="btn" id="copyPrompt" type="button">Copy Hinglish Conversion Prompt</button>
+    </div>
+    <div class="status" id="expStatus"></div>
+  </section>
+</main>
+
+<footer>🎁 <b>Digii Bro SRT Tool — Audience Edition</b> · Free forever · Your audio and API key stay in your browser. Follow <a href="https://www.instagram.com/digiibro" target="_blank" rel="noopener">@digiibro</a> on <a href="https://www.instagram.com/digiibro" target="_blank" rel="noopener">Instagram</a> &amp; <a href="https://www.tiktok.com/@digiibro" target="_blank" rel="noopener">TikTok</a> · Join the <a href="https://whatsapp.com/channel/0029Vb9G4yDHgZWjqhp5Ub2B" target="_blank" rel="noopener">WhatsApp Channel</a> for more free tools. Browser Whisper models: OpenAI Whisper (MIT) via Transformers.js.</footer>
+
+<script>
+/*__CORE_START__*/
+/* ===== Digii SRT Tool — pure logic (no DOM). Extracted and unit-tested in Node. ===== */
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
+const GROQ_MAX_BYTES = 24 * 1024 * 1024;   /* stay safely under Groq's 25 MB free-tier file limit */
+const GROQ_CHUNK_SECONDS = 600;            /* ~10-minute chunks for large files */
+const SENTENCE_END = /[.?!।]$/;
+
+function pad(n, l){ return String(n).padStart(l === undefined ? 2 : l, '0'); }
+
+/* seconds -> "HH:MM:SS,mmm" (SRT). Rounds to ms first so 59.9999 -> 00:01:00,000 */
+function fmtTime(sec){
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  let ms = Math.round(sec * 1000);
+  const h = Math.floor(ms / 3600000); ms -= h * 3600000;
+  const m = Math.floor(ms / 60000);   ms -= m * 60000;
+  const s = Math.floor(ms / 1000);    ms -= s * 1000;
+  return pad(h) + ':' + pad(m) + ':' + pad(s) + ',' + pad(ms, 3);
+}
+/* seconds -> "HH:MM:SS.mmm" (WebVTT) */
+function fmtTimeVTT(sec){ return fmtTime(sec).replace(',', '.'); }
+
+/* "HH:MM:SS,mmm" / "MM:SS.mmm" -> seconds, or null if unparseable */
+function parseTime(str){
+  if (typeof str !== 'string') return null;
+  const m = str.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:[.,](\d{1,3}))?$/);
+  if (!m) return null;
+  const h = m[1] ? parseInt(m[1], 10) : 0;
+  const min = parseInt(m[2], 10), s = parseInt(m[3], 10);
+  const ms = m[4] ? parseInt((m[4] + '000').slice(0, 3), 10) : 0;
+  if (min > 59 || s > 59) return null;
+  return h * 3600 + min * 60 + s + ms / 1000;
+}
+
+/* Parse SRT text -> [{start,end,text}] */
+function parseSRT(text){
+  const out = [];
+  const blocks = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\n\s*\n/);
+  for (const b of blocks){
+    const lines = b.split('\n').map(x => x.trim()).filter(x => x.length);
+    if (!lines.length) continue;
+    let ti = lines.findIndex(l => l.indexOf('-->') !== -1);
+    if (ti === -1) continue;
+    const parts = lines[ti].split('-->');
+    const start = parseTime(parts[0]), end = parseTime(parts[1]);
+    if (start === null || end === null) continue;
+    const txt = lines.slice(ti + 1).join('\n').trim();
+    out.push({ start: start, end: end, text: txt });
+  }
+  return out;
+}
+
+function segText(seg){ return (seg.text || '').trim(); }
+
+function buildSRT(segs){
+  return segs.map((s, i) => (i + 1) + '\n' + fmtTime(s.start) + ' --> ' + fmtTime(s.end) + '\n' + segText(s)).join('\n\n') + (segs.length ? '\n' : '');
+}
+function buildVTT(segs){
+  return 'WEBVTT\n\n' + segs.map((s, i) => (i + 1) + '\n' + fmtTimeVTT(s.start) + ' --> ' + fmtTimeVTT(s.end) + '\n' + segText(s)).join('\n\n') + (segs.length ? '\n' : '');
+}
+function buildTXT(segs){
+  return segs.map(s => segText(s).replace(/\n/g, ' ')).filter(Boolean).join('\n') + (segs.length ? '\n' : '');
+}
+
+function tokenize(text){ return String(text || '').trim().split(/\s+/).filter(Boolean); }
+
+/* Build a segment object from an array of word objects */
+function segFromWords(ws){
+  return {
+    start: ws[0].start,
+    end: ws[ws.length - 1].end,
+    text: ws.map(w => w.word).join(' '),
+    words: ws.slice()
+  };
+}
+
+/* Group flat word list [{word,start,end}] into segments.
+   A segment breaks as soon as a set limit is reached (post-push semantics):
+   - sentence-aware: current word ends a sentence (. ? ! ।)
+   - maxWords: segment already holds that many words
+   - maxChars: joined text length >= limit
+   - maxDur: segment span (last word end - first word start) >= limit seconds
+   0 / empty limit = ignored. */
+function resegmentWords(words, opts){
+  opts = opts || {};
+  const maxWords = +opts.maxWords || 0;
+  const maxChars = +opts.maxChars || 0;
+  const maxDur = +opts.maxDur || 0;
+  const sentenceAware = opts.sentenceAware !== false;
+  const segs = [];
+  let cur = [];
+  const flush = () => { if (cur.length){ segs.push(segFromWords(cur)); cur = []; } };
+  for (const w of (words || [])){
+    if (!w || !w.word) continue;
+    cur.push(w);
+    const textLen = cur.map(x => x.word).join(' ').length;
+    const dur = w.end - cur[0].start;
+    if (sentenceAware && SENTENCE_END.test(String(w.word).trim())) { flush(); continue; }
+    if (maxWords > 0 && cur.length >= maxWords) { flush(); continue; }
+    if (maxChars > 0 && textLen >= maxChars) { flush(); continue; }
+    if (maxDur > 0 && dur >= maxDur) { flush(); continue; }
+  }
+  flush();
+  return segs;
+}
+
+/* Split one segment at a character cursor position in its text.
+   If the segment's stored words line up 1:1 with its text tokens, the split
+   uses the real word timings; otherwise the time is split proportionally.
+   Returns [left, right] or null when the cursor cannot split. */
+function splitSegmentAtCursor(seg, cursorPos){
+  const text = segText(seg);
+  if (!text) return null;
+  const tokens = [];
+  const re = /\S+/g; let m;
+  while ((m = re.exec(text)) !== null) tokens.push({ t: m[0], from: m.index, to: m.index + m[0].length });
+  if (tokens.length < 2) return null;
+  let idx = tokens.findIndex(t => cursorPos <= t.to);
+  if (idx === -1) idx = tokens.length - 1;
+  if (idx <= 0 || idx >= tokens.length) return null;
+  const leftText = tokens.slice(0, idx).map(t => t.t).join(' ');
+  const rightText = tokens.slice(idx).map(t => t.t).join(' ');
+  const hasWordTimes = seg.words && seg.words.length === tokens.length;
+  if (hasWordTimes){
+    const lw = seg.words.slice(0, idx), rw = seg.words.slice(idx);
+    return [
+      { start: seg.start, end: lw[lw.length - 1].end, text: leftText, words: lw },
+      { start: rw[0].start, end: seg.end, text: rightText, words: rw }
+    ];
+  }
+  const span = Math.max(0, seg.end - seg.start);
+  const mid = seg.start + span * (leftText.length / Math.max(1, text.length));
+  return [
+    { start: seg.start, end: mid, text: leftText, words: [] },
+    { start: mid, end: seg.end, text: rightText, words: [] }
+  ];
+}
+
+function mergeSegments(a, b){
+  return {
+    start: a.start,
+    end: b.end,
+    text: (segText(a) + ' ' + segText(b)).trim(),
+    words: (a.words || []).concat(b.words || [])
+  };
+}
+
+function countOccurrences(haystack, needle){
+  if (!needle) return 0;
+  return String(haystack).split(needle).length - 1;
+}
+function replaceInSegments(segs, find, repl){
+  let count = 0;
+  const out = segs.map(s => {
+    count += countOccurrences(s.text, find);
+    return Object.assign({}, s, { text: String(s.text).split(find).join(repl) });
+  });
+  return { segments: out, count: count };
+}
+
+/* Distribute a segment's time evenly across its text tokens (used for SRT
+   import, where only cue-level timings exist). */
+function estimateWordsForSegment(seg){
+  const toks = tokenize(seg.text);
+  if (!toks.length) return [];
+  const span = Math.max(0.05, seg.end - seg.start);
+  const step = span / toks.length;
+  return toks.map((t, i) => ({ word: t, start: seg.start + i * step, end: seg.start + (i + 1) * step }));
+}
+
+/* Groq verbose_json response (+ per-chunk time offset) -> {words, segments, text}.
+   Pure: no network here, so tests can verify the offset math directly. */
+function wordsFromGroq(json, offset){
+  offset = offset || 0;
+  const words = (json.words || []).map(w => ({
+    word: String(w.word || '').trim(),
+    start: (typeof w.start === 'number' ? w.start : 0) + offset,
+    end: (typeof w.end === 'number' ? w.end : (typeof w.start === 'number' ? w.start : 0)) + offset
+  })).filter(w => w.word);
+  let segments = [];
+  if (json.segments && json.segments.length){
+    segments = json.segments.map((s, i) => {
+      const st = (s.start || 0) + offset, en = (typeof s.end === 'number' ? s.end : st) + offset;
+      const isLast = i === json.segments.length - 1;
+      const ws = words.filter(w => w.start >= st - 0.001 && (w.start < en || (isLast && w.start <= en + 0.001)));
+      return { start: st, end: en, text: String(s.text || '').trim() || ws.map(w => w.word).join(' '), words: ws };
+    }).filter(s => s.text);
+  }
+  if (!segments.length && words.length){
+    segments = resegmentWords(words, { maxWords: 12, maxChars: 84, sentenceAware: true });
+  }
+  return { words: words, segments: segments, text: String(json.text || '').trim() };
+}
+
+/* Build the multipart form for one Groq transcription request.
+   Pure (uses only the global FormData), so tests can verify the fields. */
+function buildGroqFormData(fileBlob, filename, model, lang){
+  const fd = new FormData();
+  fd.append('file', fileBlob, filename || 'audio.mp3');
+  fd.append('model', model);
+  fd.append('response_format', 'verbose_json');
+  fd.append('timestamp_granularities[]', 'word');
+  fd.append('timestamp_granularities[]', 'segment');
+  if (lang) fd.append('language', lang);
+  return fd;
+}
+
+/* Chunk plan for a sample buffer: [{from,to,offsetSec}] — offsetSec is what
+   gets added to every timestamp returned for that chunk. */
+function chunkOffsets(totalSamples, sampleRate, chunkSeconds){
+  const chunkSamples = Math.max(1, Math.floor(sampleRate * chunkSeconds));
+  const out = [];
+  for (let from = 0; from < totalSamples; from += chunkSamples){
+    out.push({ from: from, to: Math.min(totalSamples, from + chunkSamples), offsetSec: from / sampleRate });
+  }
+  if (!out.length) out.push({ from: 0, to: 0, offsetSec: 0 });
+  return out;
+}
+
+/* Encode mono Float32 samples as 16-bit PCM WAV bytes (pure). */
+function encodeWAVSamples(samples, sampleRate){
+  const n = samples.length;
+  const buf = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(buf);
+  const wStr = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  wStr(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); wStr(8, 'WAVE');
+  wStr(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  wStr(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++){
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  return new Uint8Array(buf);
+}
+
+/* Ready-made prompt for Ali's workflow: Hindi SRT -> Roman Hinglish via any AI,
+   with cue numbers and timestamps frozen. */
+function buildHinglishPrompt(srtText){
+  return [
+    'Convert ONLY the subtitle text in the SRT below from Hindi (Devanagari) to Roman Hinglish (Hindi written in simple English letters, the way Indian creators type it, e.g. "yeh video mein hum seekhenge").',
+    'STRICT RULES:',
+    '1. Do NOT change, add or remove any cue number.',
+    '2. Do NOT change any timestamp — every timestamp must stay exactly the same, character for character.',
+    '3. Do NOT add or remove any subtitle cue, and do not merge or split cues.',
+    '4. Keep English words that are already in English exactly as they are.',
+    '5. Output ONLY the full converted SRT file, nothing else — no explanation, no markdown fences.',
+    '',
+    'SRT:',
+    String(srtText || '')
+  ].join('\n');
+}
+
+const DigiiCore = {
+  GROQ_API_URL, GROQ_MAX_BYTES, GROQ_CHUNK_SECONDS,
+  fmtTime, fmtTimeVTT, parseTime, parseSRT, buildSRT, buildVTT, buildTXT,
+  tokenize, segFromWords, resegmentWords, splitSegmentAtCursor, mergeSegments,
+  countOccurrences, replaceInSegments, estimateWordsForSegment,
+  wordsFromGroq, buildGroqFormData, chunkOffsets, encodeWAVSamples, buildHinglishPrompt
+};
+if (typeof globalThis !== 'undefined') globalThis.DigiiCore = DigiiCore;
+/*__CORE_END__*/
+</script>
+
+<script type="text/plain" id="bwWorkerSrc">
+/* Browser Whisper worker — same pattern as the proven Hinglish Caption Tool:
+   Transformers.js loaded from jsDelivr, ASR pipeline with quantized weights,
+   word timestamps, 30s chunks with 5s stride, progress posted back. */
+let asr = null, asrModel = null, libPromise = null;
+function loadLib(url){
+  if (!libPromise){
+    libPromise = import(url).then(function(lib){
+      try { lib.env.allowLocalModels = false; } catch(e){}
+      try { lib.env.backends.onnx.wasm.numThreads = 1; } catch(e){}
+      return lib;
+    });
+  }
+  return libPromise;
+}
+self.onmessage = async function(e){
+  const m = e.data;
+  try {
+    const lib = await loadLib(m.libUrl);
+    const prog = function(p){ if (p.status === 'progress' && p.progress !== undefined) self.postMessage({ t:'progress', v:p.progress, file:p.file || '' }); };
+    if (!asr || asrModel !== m.model){
+      self.postMessage({ t:'status', msg:'Downloading the AI model (first time only)...' });
+      const opts = m.libUrl.indexOf('@huggingface/transformers') !== -1 ? { dtype:'q8', progress_callback:prog } : { quantized:true, progress_callback:prog };
+      asr = await lib.pipeline('automatic-speech-recognition', m.model, opts);
+      asrModel = m.model;
+    }
+    self.postMessage({ t:'status', msg:'AI is listening to your audio and extracting word timings...' });
+    const ropts = { return_timestamps:'word', chunk_length_s:30, stride_length_s:5, task:'transcribe' };
+    if (m.lang) ropts.language = m.lang;
+    const res = await asr(m.audio, ropts);
+    self.postMessage({ t:'result', res:res });
+  } catch (err) {
+    self.postMessage({ t:'error', msg:String((err && err.message) || err) });
+  }
+};
+</script>
+
+<script>
+(function(){
+'use strict';
+const C = window.DigiiCore;
+const $ = id => document.getElementById(id);
+const state = {
+  file: null, duration: 0, engine: 'groq',
+  words: [], segments: [], engineUsed: '—',
+  running: false, cancelled: false, abortCtl: null,
+  bwWorker: null, bwModelLoaded: null, playingIdx: -1
+};
+
+/* ---------- small helpers ---------- */
+function setStatus(msg, cls){ const s = $('status'); s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
+function setProgress(pct){
+  const p = $('prog');
+  if (pct === null || pct === undefined){ p.style.display = 'none'; return; }
+  p.style.display = 'block'; p.value = Math.max(0, Math.min(100, pct));
+}
+function fmtSize(b){ return b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; }
+function fmtDur(sec){ if (!isFinite(sec) || sec <= 0) return '0:00'; sec = Math.round(sec); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); }
+function download(name, content, mime){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mime || 'text/plain;charset=utf-8' }));
+  a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+}
+function baseName(){ return state.file ? state.file.name.replace(/\.[^.]+$/, '') : 'subtitles'; }
+
+/* ---------- stats ---------- */
+function updateStats(){
+  const lastEnd = state.segments.length ? state.segments[state.segments.length - 1].end : 0;
+  $('stDuration').textContent = fmtDur(state.duration || lastEnd);
+  $('stWords').textContent = state.segments.reduce((n, s) => n + C.tokenize(s.text).length, 0);
+  $('stSegs').textContent = state.segments.length;
+  $('stEngine').textContent = state.engineUsed;
+  $('stEngine').style.fontSize = state.engineUsed.length > 12 ? '13px' : '19px';
+}
+
+/* Words for resegmenting: prefer stored word timings; if a segment's text was
+   edited so tokens no longer match its words, estimate timings from the cue. */
+function collectWords(){
+  const out = [];
+  for (const s of state.segments){
+    if (s.words && s.words.length && s.words.length === C.tokenize(s.text).length) out.push.apply(out, s.words);
+    else out.push.apply(out, C.estimateWordsForSegment(s));
+  }
+  return out;
+}
+
+/* ---------- segment editor ---------- */
+function renderSegments(){
+  const list = $('segList');
+  list.innerHTML = '';
+  if (!state.segments.length){
+    const d = document.createElement('div'); d.className = 'empty';
+    d.textContent = 'No subtitles yet. Transcribe a file above, or import an .SRT file in Step 1.';
+    list.appendChild(d); updateStats(); return;
+  }
+  state.segments.forEach((seg, i) => {
+    const box = document.createElement('div'); box.className = 'seg'; box.dataset.i = i;
+    const head = document.createElement('div'); head.className = 'seg-head';
+    const num = document.createElement('span'); num.className = 'seg-num'; num.textContent = '#' + (i + 1); num.title = 'Click segment to play it';
+    const t0 = document.createElement('input'); t0.type = 'text'; t0.value = C.fmtTime(seg.start); t0.title = 'Start time HH:MM:SS,mmm'; t0.dataset.f = 'start';
+    const arr = document.createElement('span'); arr.className = 'arr'; arr.textContent = '→';
+    const t1 = document.createElement('input'); t1.type = 'text'; t1.value = C.fmtTime(seg.end); t1.title = 'End time HH:MM:SS,mmm'; t1.dataset.f = 'end';
+    const sp = document.createElement('span'); sp.className = 'sp';
+    const mkBtn = (label, title, fn, danger) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small' + (danger ? ' danger' : '');
+      b.textContent = label; b.title = title; b.addEventListener('click', ev => { ev.stopPropagation(); fn(b); }); return b;
+    };
+    const bSplit = mkBtn('Split', 'Split this segment at the cursor position in the text (uses word timings)', () => {
+      const ta = box.querySelector('textarea');
+      const parts = C.splitSegmentAtCursor(state.segments[i], ta.selectionStart || 0);
+      if (!parts){ setStatus('Put the text cursor in the middle of the segment text first, then press Split.', 'err'); return; }
+      state.segments.splice(i, 1, parts[0], parts[1]); renderSegments(); setStatus('Segment #' + (i + 1) + ' split into two.', 'ok');
+    });
+    const bMerge = mkBtn('Merge ↓', 'Merge with the next segment', () => {
+      if (i >= state.segments.length - 1) return;
+      state.segments.splice(i, 2, C.mergeSegments(state.segments[i], state.segments[i + 1]));
+      renderSegments(); setStatus('Merged segment #' + (i + 1) + ' with the next one.', 'ok');
+    });
+    const bDel = mkBtn('Delete', 'Delete this segment', () => {
+      state.segments.splice(i, 1); renderSegments(); setStatus('Segment deleted.', 'ok');
+    }, true);
+    const bAdd = mkBtn('+ Add', 'Add a new empty segment after this one', () => {
+      const s = state.segments[i];
+      state.segments.splice(i + 1, 0, { start: s.end, end: s.end + 2, text: '', words: [] });
+      renderSegments();
+      const ta = list.querySelector('[data-i="' + (i + 1) + '"] textarea'); if (ta) ta.focus();
+    });
+    head.append(num, t0, arr, t1, sp, bSplit, bMerge, bDel, bAdd);
+    const ta = document.createElement('textarea'); ta.value = seg.text; ta.rows = Math.min(4, Math.max(1, Math.ceil((seg.text || '').length / 60)));
+    ta.placeholder = 'Subtitle text...';
+    ta.addEventListener('input', () => { state.segments[i].text = ta.value; updateStats(); });
+    [t0, t1].forEach(inp => inp.addEventListener('change', () => {
+      const v = C.parseTime(inp.value);
+      if (v === null){ inp.style.borderColor = 'var(--err)'; inp.value = C.fmtTime(state.segments[i][inp.dataset.f]); setStatus('Time format must look like 00:01:23,500 — change reverted.', 'err'); return; }
+      inp.style.borderColor = ''; state.segments[i][inp.dataset.f] = v;
+      if (state.segments[i].end < state.segments[i].start) state.segments[i].end = state.segments[i].start;
+      renderSegments();
+    }));
+    box.append(head, ta);
+    box.addEventListener('click', ev => {
+      if (ev.target.closest('textarea,input,button')) return;
+      seekPlay(state.segments[i]);
+    });
+    num.addEventListener('click', ev => { ev.stopPropagation(); seekPlay(state.segments[i]); });
+    list.appendChild(box);
+  });
+  state.playingIdx = -1;
+  updateStats();
+}
+function seekPlay(seg){
+  const p = $('player');
+  if (!state.file){ setStatus('Load the audio file in Step 1 to play segments.', 'err'); return; }
+  try { p.currentTime = Math.max(0, seg.start); } catch(e){}
+  p.play();
+}
+$('player').addEventListener('timeupdate', () => {
+  const t = $('player').currentTime;
+  let idx = -1;
+  for (let i = 0; i < state.segments.length; i++){ const s = state.segments[i]; if (t >= s.start && t < s.end){ idx = i; break; } }
+  if (idx === state.playingIdx) return;
+  state.playingIdx = idx;
+  document.querySelectorAll('.seg.playing').forEach(el => el.classList.remove('playing'));
+  if (idx >= 0){
+    const el = document.querySelector('.seg[data-i="' + idx + '"]');
+    if (el){ el.classList.add('playing'); if ($('autoScroll').checked) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  }
+});
+$('addSegTop').addEventListener('click', () => {
+  const last = state.segments[state.segments.length - 1];
+  const st = last ? last.end : 0;
+  state.segments.push({ start: st, end: st + 2, text: '', words: [] });
+  renderSegments();
+});
+
+/* ---------- find & replace ---------- */
+$('frBtn').addEventListener('click', () => {
+  const find = $('frFind').value, repl = $('frRepl').value;
+  const fs = $('frStatus');
+  if (!find){ fs.textContent = 'Type something in the Find box first.'; fs.className = 'status err'; return; }
+  if (!state.segments.length){ fs.textContent = 'No subtitles to search yet.'; fs.className = 'status err'; return; }
+  const r = C.replaceInSegments(state.segments, find, repl);
+  state.segments = r.segments;
+  fs.textContent = r.count ? ('Replaced ' + r.count + ' occurrence' + (r.count === 1 ? '' : 's') + ' across all segments.') : 'Text not found in any segment.';
+  fs.className = 'status' + (r.count ? ' ok' : ' err');
+  renderSegments();
+});
+
+/* ---------- resegment ---------- */
+$('resegmentBtn').addEventListener('click', () => {
+  const rs = $('rsStatus');
+  const words = collectWords();
+  if (!words.length){ rs.textContent = 'Nothing to resegment yet — transcribe or import first.'; rs.className = 'status err'; return; }
+  state.words = words;
+  state.segments = C.resegmentWords(words, {
+    maxWords: parseFloat($('rsWords').value) || 0,
+    maxChars: parseFloat($('rsChars').value) || 0,
+    maxDur: parseFloat($('rsDur').value) || 0,
+    sentenceAware: $('rsSentence').checked
+  });
+  renderSegments();
+  rs.textContent = 'Done — now ' + state.segments.length + ' segments, built from the stored word timings (no re-transcription).';
+  rs.className = 'status ok';
+});
+
+/* ---------- export ---------- */
+function needSegments(el){
+  if (state.segments.length) return true;
+  el.textContent = 'Nothing to export yet — transcribe or import subtitles first.'; el.className = 'status err'; return false;
+}
+$('expSrt').addEventListener('click', () => { if (needSegments($('expStatus'))) { download(baseName() + '.srt', C.buildSRT(state.segments), 'application/x-subrip;charset=utf-8'); $('expStatus').textContent = 'SRT downloaded.'; $('expStatus').className = 'status ok'; } });
+$('expVtt').addEventListener('click', () => { if (needSegments($('expStatus'))) { download(baseName() + '.vtt', C.buildVTT(state.segments), 'text/vtt;charset=utf-8'); $('expStatus').textContent = 'VTT downloaded.'; $('expStatus').className = 'status ok'; } });
+$('expTxt').addEventListener('click', () => { if (needSegments($('expStatus'))) { download(baseName() + '.txt', C.buildTXT(state.segments)); $('expStatus').textContent = 'TXT downloaded.'; $('expStatus').className = 'status ok'; } });
+$('copyPrompt').addEventListener('click', async () => {
+  const el = $('expStatus');
+  if (!needSegments(el)) return;
+  const prompt = C.buildHinglishPrompt(C.buildSRT(state.segments));
+  try { await navigator.clipboard.writeText(prompt); el.textContent = 'Copied! Paste it into any AI chat — it will return the same SRT with the text converted to Roman Hinglish, timestamps untouched.'; el.className = 'status ok'; }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = prompt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); el.textContent = 'Copied! Paste it into any AI chat to get Roman Hinglish with the same timestamps.'; el.className = 'status ok'; }
+    catch(e2){ el.textContent = 'Copy failed in this browser — select the SRT text manually instead.'; el.className = 'status err'; }
+    ta.remove();
+  }
+});
+
+/* ---------- file handling ---------- */
+function setFile(file){
+  if (!file) return;
+  state.file = file; state.duration = 0;
+  $('fileInfo').style.display = 'block';
+  $('fiName').textContent = file.name;
+  $('fiMeta').textContent = 'Size: ' + fmtSize(file.size) + ' · Loading duration...';
+  const p = $('player'); p.src = URL.createObjectURL(file);
+  p.onloadedmetadata = () => {
+    if (isFinite(p.duration)){ state.duration = p.duration; $('fiMeta').textContent = 'Size: ' + fmtSize(file.size) + ' · Duration: ' + fmtDur(p.duration); updateStats(); }
+  };
+  setStatus('File loaded: ' + file.name + '. Now choose an engine and press Transcribe.', 'ok');
+}
+const dz = $('dropZone');
+dz.addEventListener('click', () => $('fileInput').click());
+dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('fileInput').click(); } });
+['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('over'); }));
+dz.addEventListener('drop', e => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) setFile(f); });
+$('fileInput').addEventListener('change', e => { if (e.target.files[0]) setFile(e.target.files[0]); e.target.value = ''; });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+
+/* ---------- SRT import ---------- */
+$('importSrtBtn').addEventListener('click', () => $('srtInput').click());
+$('srtInput').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const cues = C.parseSRT(await f.text());
+    if (!cues.length) throw new Error('No subtitle cues were found in that file. Is it a valid .srt?');
+    state.segments = cues.map(c => ({ start: c.start, end: c.end, text: c.text, words: C.estimateWordsForSegment(c) }));
+    state.words = collectWords();
+    state.engineUsed = 'Imported SRT';
+    renderSegments();
+    setStatus('SRT imported: ' + cues.length + ' segments. You can edit, resegment and export it now. (Word timings inside each cue are estimated from the cue times.)', 'ok');
+  } catch(err){ setStatus('SRT import failed: ' + (err.message || err), 'err'); }
+});
+
+/* ---------- audio decode to 16 kHz mono (pattern reused from the caption tool) ---------- */
+async function getSamples16k(file){
+  const ab = await file.arrayBuffer();
+  const ctx = new AudioContext({ sampleRate: 16000 });
+  let abuf;
+  try { abuf = await ctx.decodeAudioData(ab); } finally { try { ctx.close(); } catch(e){} }
+  state.duration = abuf.duration;
+  if (abuf.sampleRate === 16000 && abuf.numberOfChannels === 1) return abuf.getChannelData(0).slice();
+  const len = Math.floor(abuf.duration * 16000);
+  const data = new Float32Array(len);
+  const ch0 = abuf.getChannelData(0), ch1 = abuf.numberOfChannels > 1 ? abuf.getChannelData(1) : ch0;
+  const ratio = abuf.sampleRate / 16000;
+  for (let i = 0; i < len; i++){ const s = Math.floor(i * ratio); data[i] = (ch0[s] + ch1[s]) / 2; }
+  return data;
+}
+
+/* ---------- Groq engine ---------- */
+async function groqFetch(fd){
+  const res = await fetch(C.GROQ_API_URL, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + $('groqKey').value.trim() },
+    body: fd, signal: state.abortCtl ? state.abortCtl.signal : undefined
+  });
+  if (!res.ok){
+    let detail = '';
+    try { const j = await res.json(); detail = (j.error && j.error.message) || ''; } catch(e){ try { detail = await res.text(); } catch(e2){} }
+    if (res.status === 401) throw new Error('Groq rejected your API key (401). Check that you pasted the complete key — it starts with "gsk_" — and try again.');
+    if (res.status === 429) throw new Error('Groq\'s free rate limit was hit (429). Wait a minute and try again, split very long files, or use the Browser Whisper engine — it has no limits.');
+    if (res.status === 413) throw new Error('Groq said the file is too large (413). Try a shorter file or the Browser Whisper engine.');
+    throw new Error('Groq returned an error (' + res.status + ')' + (detail ? ': ' + detail : '') + '. Check your internet and key, then try again.');
+  }
+  return res.json();
+}
+async function transcribeGroq(){
+  const key = $('groqKey').value.trim();
+  if (!key) throw new Error('Paste your free Groq API key first (console.groq.com → API Keys). It stays in your browser only.');
+  const model = $('groqModel').value, lang = $('groqLang').value;
+  const allWords = [], allSegs = [];
+  if (state.file.size <= C.GROQ_MAX_BYTES){
+    setProgress(35); setStatus('Sending audio to Groq (' + model + ')...');
+    const json = await groqFetch(C.buildGroqFormData(state.file, state.file.name, model, lang));
+    const r = C.wordsFromGroq(json, 0);
+    allWords.push.apply(allWords, r.words); allSegs.push.apply(allSegs, r.segments);
+    setProgress(90);
+  } else {
+    setStatus('File is bigger than 24 MB — converting it to small 16 kHz audio and splitting into ~10-minute parts...');
+    const samples = await getSamples16k(state.file);
+    const plan = C.chunkOffsets(samples.length, 16000, C.GROQ_CHUNK_SECONDS);
+    for (let i = 0; i < plan.length; i++){
+      if (state.cancelled) throw new Error('__cancelled__');
+      const part = samples.subarray(plan[i].from, plan[i].to);
+      const wav = new Blob([C.encodeWAVSamples(part, 16000)], { type: 'audio/wav' });
+      setProgress(Math.round((i / plan.length) * 90));
+      setStatus('Transcribing part ' + (i + 1) + ' of ' + plan.length + ' with Groq...');
+      const json = await groqFetch(C.buildGroqFormData(wav, 'part' + (i + 1) + '.wav', model, lang));
+      const r = C.wordsFromGroq(json, plan[i].offsetSec);
+      allWords.push.apply(allWords, r.words); allSegs.push.apply(allSegs, r.segments);
+    }
+    setProgress(95);
+  }
+  if (!allWords.length && !allSegs.length) throw new Error('Groq returned no speech. Is the audio clear and the language setting right?');
+  return { words: allWords, segments: allSegs, label: 'Groq · ' + model };
+}
+
+/* ---------- Browser Whisper engine (caption-tool worker pattern) ---------- */
+function libUrlFor(model){
+  return model.indexOf('onnx-community/') === 0
+    ? 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2/dist/transformers.min.js'
+    : 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
+}
+function bwCall(model, lang, audio){
+  return new Promise((resolve, reject) => {
+    const workerSrc = $('bwWorkerSrc').textContent;
+    if (!state.bwWorker){
+      state.bwWorker = new Worker(URL.createObjectURL(new Blob([workerSrc], { type: 'text/javascript' })), { type: 'module' });
+    }
+    const w = state.bwWorker;
+    let alive = false;
+    const to = setTimeout(() => { if (!alive){ cleanup(); try { w.terminate(); } catch(e){} state.bwWorker = null; reject(new Error('The AI background worker did not start in time. Your browser may block it — the tool will fall back automatically.')); } }, 25000);
+    function cleanup(){ clearTimeout(to); w.removeEventListener('message', onMsg); w.removeEventListener('error', onErr); }
+    function onMsg(e){
+      alive = true;
+      const d = e.data;
+      if (d.t === 'progress'){ setProgress(Math.round(d.v)); setStatus('Model download: ' + Math.round(d.v) + '% (' + (d.file || '') + ') — first time only.'); }
+      else if (d.t === 'status'){ setStatus(d.msg); }
+      else if (d.t === 'result'){ cleanup(); resolve(d.res); }
+      else if (d.t === 'error'){ cleanup(); reject(new Error(d.msg)); }
+    }
+    function onErr(){ cleanup(); reject(new Error('AI background worker failed to start.')); }
+    w.addEventListener('message', onMsg); w.addEventListener('error', onErr);
+    try { w.postMessage({ model: model, lang: lang, libUrl: libUrlFor(model), audio: audio }, [audio.buffer]); }
+    catch(e){ cleanup(); reject(e); }
+  });
+}
+async function bwDirect(model, lang, audio){
+  setStatus('Background mode unavailable in this browser — processing directly (the page may pause briefly)...');
+  const lib = await import(libUrlFor(model));
+  try { lib.env.allowLocalModels = false; } catch(e){}
+  const opts = model.indexOf('onnx-community/') === 0 ? { dtype: 'q8' } : { quantized: true };
+  opts.progress_callback = p => { if (p.status === 'progress' && p.progress !== undefined){ setProgress(Math.round(p.progress)); setStatus('Model download: ' + Math.round(p.progress) + '% — first time only.'); } };
+  const asr = await lib.pipeline('automatic-speech-recognition', model, opts);
+  const ropts = { return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5, task: 'transcribe' };
+  if (lang) ropts.language = lang;
+  setStatus('AI is listening to your audio and extracting word timings...');
+  return asr(audio, ropts);
+}
+async function transcribeBrowser(){
+  const model = $('bwModel').value, lang = $('bwLang').value;
+  setProgress(5); setStatus('Preparing audio (16 kHz)...');
+  const samples = await getSamples16k(state.file);
+  let res;
+  try { res = await bwCall(model, lang, samples); }
+  catch(err){
+    if (state.cancelled) throw new Error('__cancelled__');
+    console.warn('Worker unavailable, falling back to direct mode:', err);
+    res = await bwDirect(model, lang, samples);
+  }
+  if (state.cancelled) throw new Error('__cancelled__');
+  const chunks = (res && res.chunks) || [];
+  const words = chunks.map(c => ({
+    word: String(c.text || '').trim(),
+    start: c.timestamp ? (c.timestamp[0] || 0) : 0,
+    end: c.timestamp ? (c.timestamp[1] != null ? c.timestamp[1] : (c.timestamp[0] || 0) + 0.3) : 0.3
+  })).filter(w => w.word);
+  if (!words.length){
+    if (res && res.text) throw new Error('The browser model heard speech but returned no word timings. Try again, or use the Groq engine.');
+    throw new Error('Browser Whisper could not hear anything. Is the audio clear? Try the Groq engine for difficult audio.');
+  }
+  const segments = C.resegmentWords(words, {
+    maxWords: parseFloat($('rsWords').value) || 0,
+    maxChars: parseFloat($('rsChars').value) || 0,
+    maxDur: parseFloat($('rsDur').value) || 0,
+    sentenceAware: $('rsSentence').checked
+  });
+  return { words: words, segments: segments, label: 'Browser Whisper' };
+}
+
+/* ---------- engine tabs ---------- */
+function selectEngine(which){
+  state.engine = which;
+  $('tabGroq').classList.toggle('active', which === 'groq');
+  $('tabBrowser').classList.toggle('active', which === 'browser');
+  $('panelGroq').classList.toggle('hidden', which !== 'groq');
+  $('panelBrowser').classList.toggle('hidden', which !== 'browser');
+}
+$('tabGroq').addEventListener('click', () => selectEngine('groq'));
+$('tabBrowser').addEventListener('click', () => selectEngine('browser'));
+
+/* ---------- Groq key persistence (localStorage only) ---------- */
+try {
+  const saved = localStorage.getItem('digii_groq_key');
+  if (saved) $('groqKey').value = saved;
+  $('groqKey').addEventListener('input', () => { try { localStorage.setItem('digii_groq_key', $('groqKey').value.trim()); } catch(e){} });
+} catch(e){}
+
+/* ---------- transcribe orchestration + cancel ---------- */
+function setRunning(on){
+  state.running = on;
+  $('transcribeBtn').disabled = on;
+  $('cancelBtn').classList.toggle('hidden', !on);
+}
+$('cancelBtn').addEventListener('click', () => {
+  state.cancelled = true;
+  if (state.abortCtl) try { state.abortCtl.abort(); } catch(e){}
+  if (state.bwWorker){ try { state.bwWorker.terminate(); } catch(e){} state.bwWorker = null; }
+  setRunning(false); setProgress(null);
+  setStatus('Cancelled. You can start again whenever you are ready.', '');
+});
+$('transcribeBtn').addEventListener('click', async () => {
+  if (!state.file){ setStatus('Upload an audio/video file in Step 1 first.', 'err'); $('dropZone').scrollIntoView({ behavior: 'smooth' }); return; }
+  state.cancelled = false;
+  state.abortCtl = ('AbortController' in window) ? new AbortController() : null;
+  setRunning(true); setProgress(2); setStatus('Starting...');
+  try {
+    const r = state.engine === 'groq' ? await transcribeGroq() : await transcribeBrowser();
+    if (state.cancelled) throw new Error('__cancelled__');
+    state.words = r.words;
+    state.segments = r.segments && r.segments.length ? r.segments : C.resegmentWords(r.words, { maxWords: 12, maxChars: 84, sentenceAware: true });
+    state.engineUsed = r.label;
+    renderSegments();
+    setProgress(100);
+    setTimeout(() => setProgress(null), 600);
+    setStatus('Done! ' + state.segments.length + ' segments created with ' + r.label + '. Edit below, resegment if you want, then export your SRT.', 'ok');
+    document.querySelectorAll('.card')[2].scrollIntoView({ behavior: 'smooth' });
+  } catch(err){
+    setProgress(null);
+    if (state.cancelled || (err && err.message === '__cancelled__') || (err && err.name === 'AbortError')){
+      setStatus('Cancelled. You can start again whenever you are ready.', '');
+    } else {
+      console.error(err);
+      setStatus('Transcription failed: ' + ((err && err.message) || err), 'err');
+    }
+  } finally { setRunning(false); }
+});
+
+updateStats();
+})();
+</script>
+</body>
+</html>
