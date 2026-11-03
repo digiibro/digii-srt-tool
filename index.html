@@ -277,11 +277,12 @@
   <!-- STEP 5 : EXPORT -->
   <section class="card">
     <h2><span class="step">5</span> Export</h2>
-    <p class="sub">Download the finished subtitles, or copy the ready-made prompt that turns the Hindi text into Roman Hinglish with any AI &mdash; timings untouched.</p>
+    <p class="sub">Download the finished subtitles &mdash; or first turn the Hindi text into <b>Roman Hinglish</b> right here, free, in one click (timings untouched). The copy-prompt below is still there if you ever want an AI to polish it further.</p>
     <div class="export-row">
       <button class="btn primary" id="expSrt" type="button">Download SRT</button>
       <button class="btn" id="expVtt" type="button">Download VTT</button>
       <button class="btn" id="expTxt" type="button">Download TXT</button>
+      <button class="btn" id="convHinglish" type="button">🔤 Convert Hindi → Hinglish (Free)</button>
       <button class="btn" id="copyPrompt" type="button">Copy Hinglish Conversion Prompt</button>
     </div>
     <div class="status" id="expStatus"></div>
@@ -764,6 +765,79 @@ function needSegments(el){
   if (state.segments.length) return true;
   el.textContent = 'Nothing to export yet — transcribe or import subtitles first.'; el.className = 'status err'; return false;
 }
+
+/* ===== Hindi (Devanagari) + Urdu script -> Roman Hinglish — built-in, free, offline.
+   Same proven engine as the Digii Bro Hinglish Caption Tool. ===== */
+const DEVA_CONS={'क':'k','ख':'kh','ग':'g','घ':'gh','ङ':'ng','च':'ch','छ':'chh','ज':'j','झ':'jh','ञ':'ny','ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n','त':'t','थ':'th','द':'d','ध':'dh','न':'n','प':'p','फ':'f','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'v','श':'sh','ष':'sh','स':'s','ह':'h','़':'','क़':'q','ख़':'kh','ग़':'gh','ज़':'z','फ़':'f','ड़':'r','ढ़':'rh','ऱ':'r','ळ':'l','ज्ञ':'gy'};
+const DEVA_VOWEL={'अ':'a','आ':'aa','इ':'i','ई':'ee','उ':'u','ऊ':'oo','ए':'e','ऐ':'ai','ओ':'o','ऑ':'o','औ':'au','ऋ':'ri'};
+const DEVA_MATRA={'ा':'aa','ि':'i','ी':'ee','ु':'u','ू':'oo','े':'e','ै':'ai','ो':'o','ौ':'au','ृ':'ri','ॅ':'e','ॉ':'o'};
+function devaWordToRoman(word){
+  const ch=[...word]; const syl=[];
+  let i=0;
+  while(i<ch.length){
+    const c=ch[i];
+    if(DEVA_VOWEL[c]!==undefined){ syl.push({cons:'',vowel:DEVA_VOWEL[c],inherent:false,suffix:''}); i++; continue; }
+    if(DEVA_CONS[c]!==undefined){
+      let base=DEVA_CONS[c]; i++; let j=i;
+      if(ch[j]==='़'){ j++; }
+      if(ch[j]==='्'){ syl.push({cons:base,vowel:'',inherent:false,suffix:''}); i=j+1; continue; }
+      if(DEVA_MATRA[ch[j]]!==undefined){ syl.push({cons:base,vowel:DEVA_MATRA[ch[j]],inherent:false,suffix:''}); i=j+1; continue; }
+      syl.push({cons:base,vowel:'a',inherent:true,suffix:''}); i=j; continue;
+    }
+    if(c==='ं'||c==='ँ'){ if(syl.length)syl[syl.length-1].suffix+='n'; i++; continue; }
+    if(c==='ः'){ if(syl.length)syl[syl.length-1].suffix+='h'; i++; continue; }
+    if('०१२३४५६७८९'.includes(c)){ syl.push({cons:String('०१२३४५६७८९'.indexOf(c)),vowel:'',inherent:false,suffix:''}); i++; continue; }
+    syl.push({cons:c,vowel:'',inherent:false,suffix:''}); i++;
+  }
+  if(syl.length>1 && syl[syl.length-1].inherent) syl[syl.length-1].vowel='';
+  for(let k=1;k<syl.length-1;k++){
+    if(syl[k].inherent && syl[k-1].vowel==='a' && syl[k+1].vowel && syl[k+1].vowel!=='a') syl[k].vowel='';
+  }
+  return syl.map(s=>s.cons+s.vowel+s.suffix).join('');
+}
+
+/* English loanwords that Hindi transcription spells in Devanagari — map the literal
+   transliteration back to the real English spelling (creator vocabulary). */
+const LOAN_FIX={stoodent:'student',kolej:'college',laaif:'life',nots:'notes',aplod:'upload',kament:'comment',lonch:'launch',kvijalet:'quizlet',googal:'google',flaishakaard:'flashcard',flaishakaards:'flashcards',skreen:'screen',mobaail:'mobile',fon:'phone',veediyo:'video',vaayaral:'viral',folo:'follow',chainal:'channel',vebasaait:'website',onalaain:'online',odiyo:'audio',ofar:'offer',ordar:'order',opshan:'option',daaunalod:'download',sheyar:'share',laaik:'like',storee:'story',kaipshan:'caption',editar:'editor',vois:'voice',akaaunt:'account',pej:'page',grup:'group',laaiv:'live',chait:'chat',maisej:'message',laipatop:'laptop',kanpyootar:'computer',kaimaraa:'camera',foto:'photo',kopee:'copy',pest:'paste',klik:'click',batan:'button',seting:'setting',faail:'file',aip:'app',softaveyar:'software',intarnet:'internet',detaa:'data',plaan:'plan',praais:'price',bijanes:'business',smaart:'smart',skool:'school',klaas:'class',kors:'course',egjaam:'exam',teechar:'teacher',homavark:'homework',lekchar:'lecture',projekt:'project',rijalt:'result',sartifiket:'certificate',intaravyoo:'interview',kanpanee:'company',teem:'team',eemel:'email',paasavard:'password',nanbar:'number',lokeshan:'location',maarket:'market',shoping:'shopping',dileevaree:'delivery',pement:'payment',baink:'bank',kaard:'card',bajat:'budget',yootyoob:'youtube',instaagraam:'instagram',vhaatsaep:'whatsapp',tikatok:'tiktok',fesabuk:'facebook',krom:'chrome',braaujar:'browser',sarch:'search',topik:'topic',kantent:'content',krietar:'creator',foloars:'followers',sabsakraaib:'subscribe',notifikeshan:'notification',thanbnel:'thumbnail',taaital:'title',haishataig:'hashtag',kvaalitee:'quality',orijinal:'original',prograam:'program',sistam:'system',feechar:'feature',profaail:'profile',frend:'friend',gem:'game',moovee:'movie',myoojik:'music',daans:'dance'};
+function fixLoan(roman){ const m = roman.match(/^([a-z]+)([^a-z]*)$/); return (m && LOAN_FIX[m[1]]) ? LOAN_FIX[m[1]] + m[2] : roman; }
+function devaToRoman(s){
+  return s.split(/(\s+)/).map(part=>/[\u0900-\u097F]/.test(part)? part.split(/([^\u0900-\u097F]+)/).map(p=>/[\u0900-\u097F]/.test(p)?fixLoan(devaWordToRoman(p)):p).join('') : part).join('');
+}
+const URDU_MAP={'ا':'a','آ':'aa','ب':'b','پ':'p','ت':'t','ٹ':'t','ث':'s','ج':'j','چ':'ch','ح':'h','خ':'kh','د':'d','ڈ':'d','ذ':'z','ر':'r','ڑ':'r','ز':'z','ژ':'zh','س':'s','ش':'sh','ص':'s','ض':'z','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'q','ک':'k','گ':'g','ل':'l','م':'m','ن':'n','ں':'n','و':'o','ہ':'h','ھ':'h','ی':'i','ے':'e','ئ':'i','ؤ':'o','ۃ':'t','ة':'h','ك':'k','ي':'i','ة':'h','ـ':''};
+function urduToRoman(s){ return [...s].map(c=>URDU_MAP[c]!==undefined?URDU_MAP[c]:(/[\u064B-\u0652]/.test(c)?'':c)).join(''); }
+function toHinglish(text){
+  if(/[\u0900-\u097F]/.test(text)) text=devaToRoman(text);
+  if(/[\u0600-\u06FF]/.test(text)) text=urduToRoman(text);
+  return text.replace(/\s+/g,' ').trim();
+}
+
+/* One-click conversion of all segments, with Undo (original text kept until it no longer matches). */
+let hinglishBackup=null, hinglishStamp='';
+function segmentsStamp(){ return state.segments.length + '|' + (state.segments.length ? state.segments[0].start + '-' + state.segments[state.segments.length-1].end : ''); }
+$('convHinglish').addEventListener('click', () => {
+  const el = $('expStatus');
+  if (hinglishBackup){
+    if (segmentsStamp() === hinglishStamp){
+      state.segments = hinglishBackup; hinglishBackup = null;
+      renderSegments();
+      $('convHinglish').textContent = '🔤 Convert Hindi → Hinglish (Free)';
+      el.textContent = 'Original Hindi text restored.'; el.className = 'status ok';
+      return;
+    }
+    hinglishBackup = null; /* segments changed since conversion — backup no longer safe */
+    $('convHinglish').textContent = '🔤 Convert Hindi → Hinglish (Free)';
+  }
+  if (!needSegments(el)) return;
+  const backup = state.segments.map(s => ({ ...s }));
+  let n = 0;
+  state.segments.forEach(s => { const c = toHinglish(s.text); if (c !== s.text) n++; s.text = c; });
+  if (!n){ el.textContent = 'Your text is already in Roman — nothing to convert.'; el.className = 'status'; return; }
+  hinglishBackup = backup; hinglishStamp = segmentsStamp();
+  renderSegments();
+  $('convHinglish').textContent = '↩ Undo Hinglish Conversion';
+  el.textContent = '✅ Converted ' + n + ' segments to Roman Hinglish — timings untouched. Now Download SRT, or Undo any time.'; el.className = 'status ok';
+});
+
 $('expSrt').addEventListener('click', () => { if (needSegments($('expStatus'))) { download(baseName() + '.srt', C.buildSRT(state.segments), 'application/x-subrip;charset=utf-8'); $('expStatus').textContent = 'SRT downloaded.'; $('expStatus').className = 'status ok'; } });
 $('expVtt').addEventListener('click', () => { if (needSegments($('expStatus'))) { download(baseName() + '.vtt', C.buildVTT(state.segments), 'text/vtt;charset=utf-8'); $('expStatus').textContent = 'VTT downloaded.'; $('expStatus').className = 'status ok'; } });
 $('expTxt').addEventListener('click', () => { if (needSegments($('expStatus'))) { download(baseName() + '.txt', C.buildTXT(state.segments)); $('expStatus').textContent = 'TXT downloaded.'; $('expStatus').className = 'status ok'; } });
